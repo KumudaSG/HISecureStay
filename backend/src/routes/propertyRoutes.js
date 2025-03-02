@@ -77,6 +77,39 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get user's rented properties
+router.get('/my-rentals', async (req, res) => {
+  try {
+    const { walletAddress } = req.query;
+    
+    if (!walletAddress) {
+      return res.status(400).json(formatResponse(false, null, 'Wallet address is required'));
+    }
+
+    // Mock rental data - replace with database integration
+    const rentals = walletAddress === 'HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe5tHgP' 
+      ? [
+          {
+            id: 1,
+            propertyId: 2,
+            name: 'Mountain Cabin',
+            startDate: '2025-03-01',
+            endDate: '2025-03-07',
+            totalPrice: 3500000000,
+            status: 'active',
+            smartLockAccess: true,
+            image: 'https://images.unsplash.com/photo-1518563259479-d003c05a6507'
+          }
+        ]
+      : [];
+
+    res.json(formatResponse(true, { rentals }));
+  } catch (error) {
+    console.error('Error fetching rentals:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to fetch rentals'));
+  }
+});
+
 // Get a specific property
 router.get('/:id', async (req, res) => {
   try {

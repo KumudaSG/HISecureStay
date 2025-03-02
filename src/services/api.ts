@@ -56,6 +56,12 @@ export const propertyAPI = {
     return response.data;
   },
   
+  // Get rentals for a specific wallet address
+  getMyRentals: async (walletAddress: string) => {
+    const response = await api.get(`/properties/my-rentals?walletAddress=${walletAddress}`);
+    return response.data;
+  },
+  
   // Get a specific property by ID
   getPropertyById: async (id: number) => {
     const response = await api.get(`/properties/${id}`);

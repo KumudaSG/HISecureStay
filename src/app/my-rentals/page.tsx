@@ -14,27 +14,24 @@ import {
   AlertIcon,
   VStack,
 } from '@chakra-ui/react';
-import { PropertyCard } from '@/components/property/property-card';
+import { RentalCard } from '@/components/property/rental-card';
 import { propertyAPI } from '@/services/api';
 import { useAppWallet } from '@/context/WalletContext';
 
-interface Property {
-  id: string;
+interface Rental {
+  id: number;
+  propertyId: number;
   name: string;
-  description: string;
-  price_per_day: number;
-  location: {
-    city: string;
-    state: string;
-  };
-  images: string[];
+  startDate: string;
+  endDate: string;
+  totalPrice: number;
   status: string;
-  rental_start: string;
-  rental_end: string;
+  smartLockAccess: boolean;
+  image: string;
 }
 
 export default function MyRentals() {
-  const [rentals, setRentals] = useState<Property[]>([]);
+  const [rentals, setRentals] = useState<Rental[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isConnected, publicKey } = useAppWallet();
@@ -103,8 +100,8 @@ export default function MyRentals() {
           </Alert>
         ) : (
           <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-            {rentals.map((property) => (
-              <PropertyCard key={property.id} property={property} />
+            {rentals.map((rental) => (
+              <RentalCard key={rental.id} rental={rental} />
             ))}
           </SimpleGrid>
         )}
