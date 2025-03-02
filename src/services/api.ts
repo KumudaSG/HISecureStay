@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base URL of the API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003/api';
 
 // Create an axios instance
 const api = axios.create({

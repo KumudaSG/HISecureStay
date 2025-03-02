@@ -185,6 +185,46 @@ class ApiAdapter {
     }
   }
 
+  // Get digital keys for a user
+  async getDigitalKeys(walletAddress: string): Promise<any> {
+    if (this.isDemoMode) {
+      // Mock implementation for demo mode
+      const properties = await this.getAllProperties();
+      const locks = await this.getAllLocks();
+      
+      // Create digital keys based on properties and locks
+      const keys = properties
+        .filter(p => p.owner === walletAddress || p.currentTenant === walletAddress)
+        .map(property => {
+          const lock = locks.find(l => l.propertyId === property.id);
+          if (!lock) return null;
+          
+          const isOwner = property.owner === walletAddress;
+          
+          return {
+            id: `key-${isOwner ? 'owner' : 'tenant'}-${property.id}`,
+            propertyId: property.id,
+            propertyName: property.title,
+            lockId: lock.id,
+            accessToken: `${isOwner ? 'owner' : 'tenant'}-token-${lock.id}`,
+            issuedAt: new Date().toISOString(),
+            validUntil: isOwner 
+              ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 1 year for owners
+              : property.rentalEnd || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // rental end date or 30 days
+            status: isOwner || (property.rentalEnd && new Date(property.rentalEnd) > new Date()) 
+              ? 'active' 
+              : 'expired'
+          };
+        })
+        .filter(Boolean);
+      
+      return { success: true, data: { keys } };
+    } else {
+      const response = await propertyAPI.getDigitalKeys(walletAddress);
+      return response.data;
+    }
+  }
+
   // Smart Lock API
 
   async getAllLocks(): Promise<SmartLockData[]> {

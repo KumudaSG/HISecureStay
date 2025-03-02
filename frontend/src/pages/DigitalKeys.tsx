@@ -78,82 +78,44 @@ const DigitalKeys: React.FC = () => {
     setError(null);
     
     try {
-      // Get all properties
-      const allProperties = await apiAdapter.getAllProperties();
+      // Get digital keys from API
+      const response = await apiAdapter.getDigitalKeys(publicKey || '');
       
-      // Get all locks
-      const allLocks = await apiAdapter.getAllLocks();
-      
-      let userKeys: DigitalKey[] = [];
-      let lockDetails: Record<string, LockDetails> = {};
-      
-      // Filter properties based on wallet type and generate keys
-      if (walletType === 'owner') {
-        // For owners - they have access to all locks for their properties
-        const ownedProperties = allProperties.filter(p => p.owner === publicKey);
+      if (response.success && response.data.keys) {
+        const userKeys = response.data.keys;
         
-        userKeys = ownedProperties.map(property => {
-          // Find the lock for this property
-          const lock = allLocks.find(l => l.propertyId === property.id);
-          if (!lock) return null;
-          
-          return {
-            id: `key-owner-${property.id}`,
-            propertyId: property.id,
-            propertyName: property.title,
-            lockId: lock.id,
-            accessToken: `owner-token-${lock.id}`,
-            issuedAt: new Date().toISOString(),
-            validUntil: new Date(Date.now() + 365 * 86400000).toISOString(), // 1 year from now
-            status: 'active'
-          };
-        }).filter(Boolean) as DigitalKey[];
+        // Get all locks
+        const allLocks = await apiAdapter.getAllLocks();
         
-      } else if (walletType === 'tenant') {
-        // For tenants - they have access to properties they're renting
-        const rentedProperties = allProperties.filter(p => p.currentTenant === publicKey);
+        let lockDetails: Record<string, LockDetails> = {};
         
-        userKeys = rentedProperties.map(property => {
-          // Find the lock for this property
-          const lock = allLocks.find(l => l.propertyId === property.id);
-          if (!lock) return null;
-          
-          return {
-            id: `key-tenant-${property.id}`,
-            propertyId: property.id,
-            propertyName: property.title,
-            lockId: lock.id,
-            accessToken: `tenant-token-${lock.id}`,
-            issuedAt: property.rentalStart || new Date().toISOString(),
-            validUntil: property.rentalEnd || new Date(Date.now() + 30 * 86400000).toISOString(),
-            status: new Date(property.rentalEnd || '') > new Date() ? 'active' : 'expired'
-          };
-        }).filter(Boolean) as DigitalKey[];
+        // Create lock details map
+        allLocks.forEach(lock => {
+          // Only include locks that the user has keys for
+          const userHasKey = userKeys.some((key: DigitalKey) => key.lockId === lock.id);
+          if (userHasKey) {
+            const matchingKey = userKeys.find((key: DigitalKey) => key.lockId === lock.id);
+            lockDetails[lock.id] = {
+              id: lock.id,
+              name: `${lock.id.includes('LOCK') ? 'Smart Lock' : 'Property Lock'}`,
+              status: lock.isLocked ? 'locked' : 'unlocked',
+              battery: lock.batteryLevel,
+              lastConnected: new Date().toISOString(),
+              currentAccess: matchingKey ? {
+                accessToken: matchingKey.accessToken,
+                tenantPublicKey: publicKey || '',
+                grantedAt: matchingKey.issuedAt,
+                validUntil: matchingKey.validUntil,
+              } : null
+            };
+          }
+        });
+        
+        setDigitalKeys(userKeys);
+        setLocks(lockDetails);
+      } else {
+        throw new Error('Failed to fetch digital keys');
       }
-      
-      // Create lock details map
-      allLocks.forEach(lock => {
-        // Only include locks that the user has keys for
-        const userHasKey = userKeys.some(key => key.lockId === lock.id);
-        if (userHasKey) {
-          lockDetails[lock.id] = {
-            id: lock.id,
-            name: `${allProperties.find(p => p.id === lock.propertyId)?.title || 'Property'} Lock`,
-            status: lock.isLocked ? 'locked' : 'unlocked',
-            battery: lock.batteryLevel,
-            lastConnected: new Date().toISOString(),
-            currentAccess: {
-              accessToken: userKeys.find(key => key.lockId === lock.id)?.accessToken || '',
-              tenantPublicKey: publicKey || '',
-              grantedAt: new Date().toISOString(),
-              validUntil: new Date(Date.now() + 30 * 86400000).toISOString(),
-            }
-          };
-        }
-      });
-      
-      setDigitalKeys(userKeys);
-      setLocks(lockDetails);
     } catch (error) {
       console.error('Error fetching digital keys:', error);
       setError('Failed to load your digital keys. Please try again later.');

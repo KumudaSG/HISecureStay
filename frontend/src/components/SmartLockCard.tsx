@@ -42,6 +42,27 @@ const SmartLockCard: React.FC<SmartLockCardProps> = ({ lock, accessToken, onStat
   const cardBg = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   
+  // If lock is not provided, show a placeholder
+  if (!lock) {
+    return (
+      <Box 
+        borderWidth="1px" 
+        borderRadius="lg" 
+        overflow="hidden"
+        bg={cardBg}
+        borderColor={borderColor}
+        p={5}
+        boxShadow="md"
+        w="100%"
+        maxW="400px"
+      >
+        <VStack align="start" spacing={4}>
+          <Text>Lock information unavailable</Text>
+        </VStack>
+      </Box>
+    );
+  }
+  
   // Format date
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleString();
