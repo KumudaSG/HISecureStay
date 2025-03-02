@@ -25,11 +25,18 @@ interface Property {
   name: string;
   description: string;
   price_per_day: number;
+  min_duration: number;
+  max_duration: number;
+  smart_lock_id: string;
+  is_available: boolean;
+  owner: string;
   location: {
+    address: string;
     city: string;
     state: string;
   };
   images: string[];
+  amenities: string[];
   status: string;
 }
 

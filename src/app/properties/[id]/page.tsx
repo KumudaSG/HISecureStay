@@ -35,10 +35,10 @@ import {
   Spinner,
   Center
 } from '@chakra-ui/react';
-import { useParams, useNavigate } from 'next/navigation';
-import { propertyAPI } from '../services/api';
-import { useWallet } from '../context/WalletContext';
-import SmartLockCard from '../components/SmartLockCard';
+import { useParams, useRouter } from 'next/navigation';
+import { propertyAPI } from '@/services/api';
+import { useAppWallet } from '@/context/WalletContext';
+import { SmartLockCard } from '@/components/digital-keys/smart-lock-card';
 
 interface Property {
   id: string;
@@ -62,8 +62,8 @@ interface Property {
 const PropertyDetail: React.FC = () => {
   const params = useParams();
   const toast = useToast();
-  const navigate = useNavigate();
-  const { isConnected, publicKey, walletType } = useWallet();
+  const router = useRouter();
+  const { isConnected, publicKey, walletType } = useAppWallet();
   const { isOpen, onOpen, onClose } = useDisclosure();
   
   const [property, setProperty] = useState<Property | null>(null);
@@ -84,7 +84,7 @@ const PropertyDetail: React.FC = () => {
     setError(null);
     
     try {
-      const response = await propertyAPI.getPropertyById(propertyId);
+      const response = await propertyAPI.getPropertyById(parseInt(propertyId));
       
       if (response.success && response.data.property) {
         setProperty(response.data.property);
@@ -134,7 +134,7 @@ const PropertyDetail: React.FC = () => {
     setIsBooking(true);
     
     try {
-      const response = await propertyAPI.bookProperty(parseInt(params.id!), {
+      const response = await propertyAPI.bookProperty(parseInt(Array.isArray(params.id) ? params.id[0] : params.id), {
         tenant: publicKey,
         duration_days: duration
       });
@@ -149,7 +149,7 @@ const PropertyDetail: React.FC = () => {
         });
         
         // Generate digital key
-        const keyResponse = await propertyAPI.generateAccessKey(parseInt(params.id!), {
+        const keyResponse = await propertyAPI.generateAccessKey(parseInt(Array.isArray(params.id) ? params.id[0] : params.id), {
           tenant: publicKey
         });
         
@@ -158,7 +158,7 @@ const PropertyDetail: React.FC = () => {
           onOpen(); // Open modal with digital key
           
           // Refresh property to show it's no longer available
-          fetchPropertyDetails(params.id as string);
+          fetchPropertyDetails(Array.isArray(params.id) ? params.id[0] : params.id);
         }
       } else {
         toast({
@@ -198,8 +198,12 @@ const PropertyDetail: React.FC = () => {
           <AlertIcon />
           {error || 'Property not found'}
         </Alert>
-        <Button mt={4} onClick={() => navigate('/properties')}>
-          Back to Properties
+        <Button 
+          colorScheme="blue" 
+          mt={4} 
+          onClick={() => router.push('/properties')}
+        >
+          Back to All Properties
         </Button>
       </Container>
     );
@@ -363,18 +367,11 @@ const PropertyDetail: React.FC = () => {
             <SmartLockCard 
               lock={{
                 id: property.smart_lock_id,
-                name: `${property.name} Door Lock`,
-                status: 'locked',
-                battery: 95,
-                lastConnected: new Date().toISOString(),
-                currentAccess: {
-                  accessToken: accessToken,
-                  tenantPublicKey: publicKey || '',
-                  grantedAt: new Date().toISOString(),
-                  validUntil: new Date(Date.now() + duration * 86400000).toISOString(),
-                }
+                propertyName: `${property.name} Door Lock`,
+                status: 'active',
+                validUntil: new Date(Date.now() + duration * 86400000).toISOString(),
+                accessCode: accessToken || '',
               }}
-              accessToken={accessToken}
             />
           </Box>
         )}
@@ -431,7 +428,7 @@ const PropertyDetail: React.FC = () => {
               variant="ghost" 
               onClick={() => {
                 onClose();
-                navigate('/digital-keys');
+                router.push('/digital-keys');
               }}
             >
               View All Keys

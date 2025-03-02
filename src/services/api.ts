@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base URL of the API
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 // Create an axios instance
 const api = axios.create({
@@ -50,6 +50,12 @@ export const propertyAPI = {
     return response.data;
   },
   
+  // Get properties owned by a specific wallet address
+  getMyProperties: async (walletAddress: string) => {
+    const response = await api.get(`/properties/user/${walletAddress}`);
+    return response.data;
+  },
+  
   // Get a specific property by ID
   getPropertyById: async (id: number) => {
     const response = await api.get(`/properties/${id}`);
@@ -77,6 +83,30 @@ export const propertyAPI = {
   // Complete a rental
   completeRental: async (propertyId: number) => {
     const response = await api.post(`/properties/${propertyId}/complete`);
+    return response.data;
+  },
+  
+  // Get digital keys for a user
+  getDigitalKeys: async (walletAddress: string) => {
+    const response = await api.get(`/properties/digital-keys/${walletAddress}`);
+    return response.data;
+  },
+  
+  // Get access keys for a tenant
+  getAccessKeys: async (tenantId: string) => {
+    const response = await api.get(`/properties/access-keys/${tenantId}`);
+    return response.data;
+  },
+  
+  // Access a property using a digital key
+  accessProperty: async (lockId: string, walletAddress: string) => {
+    const response = await api.post(`/properties/access/${lockId}`, { walletAddress });
+    return response.data;
+  },
+  
+  // Revoke access to a property
+  revokeAccess: async (lockId: string, walletAddress: string) => {
+    const response = await api.post(`/properties/revoke/${lockId}`, { walletAddress });
     return response.data;
   },
 };
@@ -152,6 +182,51 @@ export const smartLockAPI = {
   // Stop AI monitoring
   stopMonitoring: async () => {
     const response = await api.post('/locks/monitoring/stop');
+    return response.data;
+  },
+};
+
+// API endpoints for blockchain operations
+export const blockchainAPI = {
+  // Get blockchain status
+  getStatus: async () => {
+    const response = await api.get('/blockchain/status');
+    return response.data;
+  },
+  
+  // List a property on the blockchain
+  listProperty: async (propertyData: any) => {
+    const response = await api.post('/blockchain/properties/list', propertyData);
+    return response.data;
+  },
+  
+  // Book a property on the blockchain
+  bookProperty: async (propertyId: number, bookingData: any) => {
+    const response = await api.post(`/blockchain/properties/${propertyId}/book`, bookingData);
+    return response.data;
+  },
+  
+  // Generate a digital key on the blockchain
+  generateDigitalKey: async (propertyId: number, tenantData: any) => {
+    const response = await api.post(`/blockchain/properties/${propertyId}/key`, tenantData);
+    return response.data;
+  },
+  
+  // Validate access on the blockchain
+  validateAccess: async (keyId: string, propertyId: number) => {
+    const response = await api.post('/blockchain/access/validate', { keyId, propertyId });
+    return response.data;
+  },
+  
+  // Get transaction history
+  getTransactionHistory: async (walletAddress: string) => {
+    const response = await api.get(`/blockchain/transactions/${walletAddress}`);
+    return response.data;
+  },
+  
+  // Get property ownership history
+  getPropertyHistory: async (propertyId: number) => {
+    const response = await api.get(`/blockchain/properties/${propertyId}/history`);
     return response.data;
   },
 };

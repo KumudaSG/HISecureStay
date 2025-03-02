@@ -19,7 +19,7 @@ import {
   Alert,
   AlertIcon
 } from '@chakra-ui/react';
-import { propertyAPI } from '@/services/api';
+import apiAdapter from '@/services/apiAdapter';
 import { PropertyCard } from '@/components/property/property-card';
 import { useAppWallet } from '@/context/WalletContext';
 
@@ -44,13 +44,9 @@ const Properties: React.FC = () => {
     setError(null);
     
     try {
-      const response = await propertyAPI.getAllProperties();
-      if (response.success && response.data.properties) {
-        setProperties(response.data.properties);
-        setFilteredProperties(response.data.properties);
-      } else {
-        setError('Failed to load properties');
-      }
+      const properties = await apiAdapter.getAllProperties();
+      setProperties(properties);
+      setFilteredProperties(properties);
     } catch (error) {
       console.error('Error fetching properties:', error);
       setError('Failed to load properties. Please try again later.');

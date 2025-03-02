@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const propertyRoutes = require('./src/routes/propertyRoutes');
 const smartLockRoutes = require('./src/routes/smartLockRoutes');
+const blockchainRoutes = require('./src/routes/blockchainRoutes');
 const { formatResponse } = require('./src/utils/helpers');
 
 // Import services
@@ -15,14 +16,6 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(cors({
   origin: 'http://localhost:3000',
-
-  current_tenant: "8xF3...j9Kl",
-  
-  // With:
-  is_rented: true,
-  
-  // And in the display logic, replace any references to current_tenant
-  // with a simple "Rented" textost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -83,6 +76,16 @@ app.get('/api/docs', (req, res) => {
         'POST /monitoring/start': '/api/locks/monitoring/start - Start AI monitoring',
         'POST /monitoring/stop': '/api/locks/monitoring/stop - Stop AI monitoring',
         'POST /check-unauthorized': '/api/locks/check-unauthorized - Manually check for unauthorized access'
+      },
+      blockchain: {
+        'GET /status': '/api/blockchain/status - Get blockchain status',
+        'POST /properties/list': '/api/blockchain/properties/list - List a property on blockchain',
+        'POST /properties/:id/book': '/api/blockchain/properties/:id/book - Book a property on blockchain',
+        'POST /properties/:id/key': '/api/blockchain/properties/:id/key - Generate a digital key on blockchain',
+        'POST /access/validate': '/api/blockchain/access/validate - Validate access on blockchain',
+        'POST /violations': '/api/blockchain/violations - Record a violation on blockchain',
+        'GET /transactions/:address': '/api/blockchain/transactions/:address - Get transaction history',
+        'GET /properties/:id/history': '/api/blockchain/properties/:id/history - Get property history'
       }
     }
   }));
@@ -91,6 +94,7 @@ app.get('/api/docs', (req, res) => {
 // API Routes
 app.use('/api/properties', propertyRoutes);
 app.use('/api/locks', smartLockRoutes);
+app.use('/api/blockchain', blockchainRoutes);
 
 // Error handling middleware
 app.use((req, res, next) => {
