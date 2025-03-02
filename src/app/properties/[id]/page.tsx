@@ -84,10 +84,19 @@ const PropertyDetail: React.FC = () => {
     setError(null);
     
     try {
-      const response = await propertyAPI.getPropertyById(parseInt(propertyId));
+      // Safely convert to number, handling non-numeric IDs
+      let id: any = propertyId;
+      if (!isNaN(Number(propertyId))) {
+        id = parseInt(propertyId);
+      }
+      
+      const response = await propertyAPI.getPropertyById(id);
       
       if (response.success && response.data.property) {
         setProperty(response.data.property);
+      } else if (response.data) {
+        // Direct property response without .property wrapper
+        setProperty(response.data);
       } else {
         setError('Failed to load property details');
       }
