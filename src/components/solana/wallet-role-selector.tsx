@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
-import { useWallet } from '@/context/WalletContext';
+import { useAppWallet } from '@/context/WalletContext';
 
 // Make sure external CSS is overridden for proper integration
 const style = `
@@ -11,7 +11,7 @@ const style = `
 `;
 
 export default function RoleSelector({ children }: { children: React.ReactNode }) {
-  const { walletType, setWalletType, isConnected } = useWallet();
+  const { walletType, setWalletType, isConnected } = useAppWallet();
   const menuRef = useRef<HTMLUListElement>(null);
   
   useEffect(() => {
