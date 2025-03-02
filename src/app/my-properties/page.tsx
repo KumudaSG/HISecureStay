@@ -21,14 +21,17 @@ import { propertyAPI } from '@/services/api';
 import { useAppWallet } from '@/context/WalletContext';
 
 interface Property {
-  id: string;
+  id: number;
+  title: string;
   name: string;
   description: string;
+  price: number;
   price_per_day: number;
   min_duration: number;
   max_duration: number;
   smart_lock_id: string;
   is_available: boolean;
+  availability: boolean;
   owner: string;
   location: {
     address: string;
@@ -60,7 +63,17 @@ export default function MyProperties() {
     try {
       const response = await propertyAPI.getMyProperties(publicKey!);
       if (response.success && response.data.properties) {
-        setProperties(response.data.properties);
+        const mappedProperties = response.data.properties.map((prop: Property) => ({
+          ...prop,
+          id: typeof prop.id === 'string' ? parseInt(prop.id, 10) : prop.id, // Ensure id is a number
+          title: prop.name, // Map name to title for PropertyCard
+          price: prop.price_per_day, // Map price_per_day to price for PropertyCard
+          availability: prop.is_available, // Map is_available to availability for PropertyCard
+          location: prop.location?.address ? `${prop.location.address}, ${prop.location.city}, ${prop.location.state}` : 'Location not available', // Add location for PropertyCard
+          images: prop.images || [], // Ensure images array exists
+          amenities: prop.amenities || [] // Ensure amenities array exists
+        }));
+        setProperties(mappedProperties);
       } else {
         setError('Failed to load properties');
       }
@@ -120,7 +133,10 @@ export default function MyProperties() {
         ) : (
           <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
             {properties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
+              <PropertyCard key={property.id} property={{
+                ...property,
+                location: `${property.location.address}, ${property.location.city}, ${property.location.state}`
+              }} />
             ))}
           </SimpleGrid>
         )}
