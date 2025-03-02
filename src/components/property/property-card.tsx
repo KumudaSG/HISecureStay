@@ -49,11 +49,10 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.600', 'gray.300');
   
-  // Format price (handling both regular SOL values and lamports)
+  // Format price (always return as SOL)
   const formatPrice = (price: number | undefined) => {
     if (!price) return '0.00';
-    // If price is already in SOL (small number), return it directly
-    // Otherwise convert from lamports (1 SOL = 1,000,000,000 lamports)
+    // Always return a fixed number that will look good
     return price > 1000 ? (price / 1000000000).toFixed(2) : price.toFixed(2);
   };
   
@@ -85,16 +84,6 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         objectFit="cover"
       />
       
-      {/* Badge for availability */}
-      <Box position="absolute" top="10px" right="10px">
-        <Badge 
-          borderRadius="full" 
-          px="2" 
-          colorScheme={(property.is_available || property.availability) ? 'green' : 'red'}
-        >
-          {(property.is_available || property.availability) ? 'Available' : 'Booked'}
-        </Badge>
-      </Box>
       
       <Box p={5}>
         <VStack align="start" spacing={3}>

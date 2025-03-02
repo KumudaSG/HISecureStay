@@ -20,17 +20,25 @@ import { useAppWallet } from '@/context/WalletContext';
 
 interface Property {
   id: string;
-  name: string;
+  name?: string;
+  title?: string;
   description: string;
-  price_per_day: number;
+  price_per_day?: number;
+  price?: number;
   location: {
+    address?: string;
     city: string;
     state: string;
-  };
+  } | string;
   images: string[];
-  status: string;
-  rental_start: string;
-  rental_end: string;
+  status?: string;
+  rentalStart?: string;
+  rentalEnd?: string;
+  rental_start?: string;
+  rental_end?: string;
+  amenities: string[];
+  is_available?: boolean;
+  availability?: boolean;
 }
 
 export default function MyRentals() {
@@ -50,11 +58,13 @@ export default function MyRentals() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await propertyAPI.getMyRentals(publicKey!);
-      if (response.success && response.data.rentals) {
-        setRentals(response.data.rentals);
+      const apiAdapter = await import('@/services/apiAdapter').then(mod => mod.default);
+      const rentals = await apiAdapter.getMyRentals(publicKey!);
+      
+      if (rentals && rentals.length > 0) {
+        setRentals(rentals);
       } else {
-        setError('Failed to load rentals');
+        setRentals([]);
       }
     } catch (error) {
       console.error('Error fetching rentals:', error);
@@ -104,7 +114,9 @@ export default function MyRentals() {
         ) : (
           <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
             {rentals.map((property) => (
-              <PropertyCard key={property.id} property={property} />
+              <Box key={property.id} position="relative">
+                <PropertyCard property={property} />
+              </Box>
             ))}
           </SimpleGrid>
         )}

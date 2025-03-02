@@ -30,8 +30,9 @@ export const WalletConnect: React.FC = () => {
     }, 500);
   };
 
-  const handleDisconnect = async () => {
-    await disconnect();
+  const handleDisconnect = () => {
+    disconnect();
+    setWalletType(null);
     
     toast({
       title: 'Wallet disconnected',
