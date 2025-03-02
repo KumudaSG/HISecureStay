@@ -51,9 +51,9 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
   
   // Format price (always return as SOL)
   const formatPrice = (price: number | undefined) => {
-    if (!price) return '0.00';
-    // Always return a fixed number that will look good
-    return price > 1000 ? (price / 1000000000).toFixed(2) : price.toFixed(2);
+    if (price === undefined || price === null) return '0.00';
+    // Return directly as SOL
+    return price.toFixed(2);
   };
   
   return (
