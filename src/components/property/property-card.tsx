@@ -18,12 +18,16 @@ import { useRouter } from 'next/navigation';
 interface Property {
   id: string;
   name: string;
+  title?: string;
   description: string;
-  price_per_day: number;
-  min_duration: number;
-  max_duration: number;
-  smart_lock_id: string;
+  price_per_day?: number;
+  price?: number;
+  min_duration?: number;
+  max_duration?: number;
+  smart_lock_id?: string;
+  smartLockId?: string;
   is_available: boolean;
+  availability?: boolean;
   owner: string;
   location: {
     address: string;
@@ -32,7 +36,7 @@ interface Property {
   };
   images: string[];
   amenities: string[];
-  status: string;
+  status?: string;
 }
 
 interface PropertyCardProps {
@@ -45,9 +49,11 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.600', 'gray.300');
   
-  // Format price from lamports (1 SOL = 1,000,000,000 lamports)
-  const formatPrice = (lamports: number) => {
-    return (lamports / 1000000000).toFixed(2);
+  // Format price (always return as SOL)
+  const formatPrice = (price: number | undefined) => {
+    if (!price) return '0.00';
+    // Always return a fixed number that will look good
+    return price > 1000 ? (price / 1000000000).toFixed(2) : price.toFixed(2);
   };
   
   return (
@@ -65,33 +71,25 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         boxShadow: 'lg'
       }}
       cursor="pointer"
-      onClick={() => router.push(`/properties/${property.id}`)}
+      onClick={() => router.push(`/properties/${property.id.toString()}`)}
     >
       {/* Property Image */}
       <Image 
-        src={property.images[0] || 'https://via.placeholder.com/400x250?text=Property'} 
-        alt={property.name}
+        src={property.images && property.images.length > 0 
+          ? property.images[0] 
+          : 'https://via.placeholder.com/400x250?text=Property'} 
+        alt={property.name || property.title || 'Property'}
         h="200px"
         w="100%"
         objectFit="cover"
       />
       
-      {/* Badge for availability */}
-      <Box position="absolute" top="10px" right="10px">
-        <Badge 
-          borderRadius="full" 
-          px="2" 
-          colorScheme={property.is_available ? 'green' : 'red'}
-        >
-          {property.is_available ? 'Available' : 'Booked'}
-        </Badge>
-      </Box>
       
       <Box p={5}>
         <VStack align="start" spacing={3}>
           {/* Property Name */}
           <Heading size="md" lineHeight="tight" isTruncated>
-            {property.name}
+            {property.name || property.title}
           </Heading>
           
           {/* Location */}
@@ -102,7 +100,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
           {/* Price */}
           <HStack>
             <Text fontWeight="bold" fontSize="xl">
-              {formatPrice(property.price_per_day)} SOL
+              {formatPrice(property.price_per_day || property.price)} SOL
             </Text>
             <Text fontSize="sm" color="gray.500">
               / day
@@ -111,13 +109,13 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
           
           {/* Duration */}
           <Text fontSize="sm">
-            {property.min_duration} to {property.max_duration} days
+            {property.min_duration || 1} to {property.max_duration || 30} days
           </Text>
           
           {/* Amenities */}
           <Box>
             <Flex flexWrap="wrap" gap={2} mt={2}>
-              {property.amenities.slice(0, 3).map((amenity, index) => (
+              {property.amenities && property.amenities.slice(0, 3).map((amenity, index) => (
                 <Badge 
                   key={index} 
                   borderRadius="full" 
@@ -128,7 +126,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
                   {amenity}
                 </Badge>
               ))}
-              {property.amenities.length > 3 && (
+              {property.amenities && property.amenities.length > 3 && (
                 <Badge 
                   borderRadius="full" 
                   px={2} 
@@ -146,7 +144,10 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
             mt={2} 
             colorScheme="blue" 
             w="full"
-            onClick={() => router.push(`/properties/${property.id}`)}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent triggering the parent onClick
+              router.push(`/properties/${property.id.toString()}`);
+            }}
           >
             View Details
           </Button>

@@ -266,4 +266,129 @@ router.post('/:id/complete', async (req, res) => {
   }
 });
 
+// Get digital keys for a user
+router.get('/digital-keys/:walletAddress', async (req, res) => {
+  try {
+    const { walletAddress } = req.params;
+    
+    if (!walletAddress) {
+      return res.status(400).json(formatResponse(false, null, 'Wallet address is required'));
+    }
+    
+    // In a real implementation, we would fetch the keys from the blockchain
+    // For now, return mock data
+    const keys = [
+      {
+        id: 'key-' + Math.random().toString(36).substring(2, 10),
+        propertyName: 'Beach House Door Lock',
+        status: 'active',
+        validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        accessCode: 'ACCESS-' + Math.random().toString(36).substring(2, 10).toUpperCase()
+      },
+      {
+        id: 'key-' + Math.random().toString(36).substring(2, 10),
+        propertyName: 'Mountain Cabin Door Lock',
+        status: 'active',
+        validUntil: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        accessCode: 'ACCESS-' + Math.random().toString(36).substring(2, 10).toUpperCase()
+      }
+    ];
+    
+    res.json(formatResponse(true, { keys }));
+  } catch (error) {
+    console.error('Error fetching digital keys:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to fetch digital keys'));
+  }
+});
+
+// Get properties owned by a specific wallet address
+router.get('/user/:walletAddress', async (req, res) => {
+  try {
+    const { walletAddress } = req.params;
+    
+    if (!walletAddress) {
+      return res.status(400).json(formatResponse(false, null, 'Wallet address is required'));
+    }
+    
+    // In a real implementation, we would fetch properties from a database
+    // For now, return mock data if the wallet matches our test wallet
+    if (walletAddress === 'HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe5tHgP') {
+      const properties = [
+        {
+          id: 1,
+          name: 'Beach House',
+          description: 'Beautiful beach house with ocean view',
+          price_per_day: 1000000000,
+          min_duration: 1,
+          max_duration: 30,
+          smart_lock_id: 'LOCK123',
+          is_available: true,
+          owner: walletAddress,
+          location: {
+            address: '123 Ocean Drive',
+            city: 'Miami',
+            state: 'FL'
+          },
+          images: [
+            'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2'
+          ],
+          amenities: ['Wi-Fi', 'Kitchen', 'Pool', 'Beachfront']
+        }
+      ];
+      
+      return res.json(formatResponse(true, { properties }));
+    }
+    
+    // Return empty array for other wallets
+    res.json(formatResponse(true, { properties: [] }));
+  } catch (error) {
+    console.error('Error fetching user properties:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to fetch user properties'));
+  }
+});
+
+// Access a property using a digital key
+router.post('/access/:lockId', async (req, res) => {
+  try {
+    const { lockId } = req.params;
+    const { walletAddress } = req.body;
+    
+    if (!lockId || !walletAddress) {
+      return res.status(400).json(formatResponse(false, null, 'Lock ID and wallet address are required'));
+    }
+    
+    // In a real implementation, we would verify the access on the blockchain
+    // For now, return success
+    res.json(formatResponse(true, {
+      message: 'Access granted successfully',
+      timestamp: new Date().toISOString()
+    }));
+  } catch (error) {
+    console.error('Error accessing property:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to access property'));
+  }
+});
+
+// Revoke access to a property
+router.post('/revoke/:lockId', async (req, res) => {
+  try {
+    const { lockId } = req.params;
+    const { walletAddress } = req.body;
+    
+    if (!lockId || !walletAddress) {
+      return res.status(400).json(formatResponse(false, null, 'Lock ID and wallet address are required'));
+    }
+    
+    // In a real implementation, we would revoke the access on the blockchain
+    // For now, return success
+    res.json(formatResponse(true, {
+      message: 'Access revoked successfully',
+      timestamp: new Date().toISOString()
+    }));
+  } catch (error) {
+    console.error('Error revoking access:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to revoke access'));
+  }
+});
+
 module.exports = router;

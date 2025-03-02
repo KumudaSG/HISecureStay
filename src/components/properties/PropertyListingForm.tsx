@@ -33,8 +33,12 @@ export const PropertyListingForm: React.FC = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    location: '',
+    address: '',
+    city: '',
+    state: '',
     price: '',
+    min_duration: '1',
+    max_duration: '30',
     images: ['https://images.unsplash.com/photo-1580587771525-78b9dba3b914'],
     amenities: '',
   });
@@ -46,6 +50,10 @@ export const PropertyListingForm: React.FC = () => {
 
   const handlePriceChange = (valueString: string) => {
     setFormData((prev) => ({ ...prev, price: valueString }));
+  };
+  
+  const handleDurationChange = (field: string, valueString: string) => {
+    setFormData((prev) => ({ ...prev, [field]: valueString }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,13 +76,22 @@ export const PropertyListingForm: React.FC = () => {
       // First, create the property in the database
       const propertyData = {
         title: formData.title,
+        name: formData.title, // Include both name and title for compatibility
         description: formData.description,
-        location: formData.location,
-        price: parseFloat(formData.price),
+        location: {
+          address: formData.address,
+          city: formData.city,
+          state: formData.state
+        },
+        price: parseFloat(formData.price) * 1000000000, // Convert to lamports
+        price_per_day: parseFloat(formData.price) * 1000000000, // Include both formats
+        min_duration: parseInt(formData.min_duration),
+        max_duration: parseInt(formData.max_duration),
         images: formData.images,
         owner: publicKey.toString(),
         amenities: formData.amenities.split(',').map((item) => item.trim()),
         availability: true,
+        is_available: true, // Include both formats
       };
       
       const createdProperty = await apiAdapter.createProperty(propertyData);
@@ -104,8 +121,12 @@ export const PropertyListingForm: React.FC = () => {
       setFormData({
         title: '',
         description: '',
-        location: '',
+        address: '',
+        city: '',
+        state: '',
         price: '',
+        min_duration: '1',
+        max_duration: '30',
         images: ['https://images.unsplash.com/photo-1580587771525-78b9dba3b914'],
         amenities: '',
       });
@@ -154,14 +175,36 @@ export const PropertyListingForm: React.FC = () => {
           </FormControl>
 
           <FormControl isRequired>
-            <FormLabel>Location</FormLabel>
+            <FormLabel>Address</FormLabel>
             <Input
-              name="location"
-              value={formData.location}
+              name="address"
+              value={formData.address}
               onChange={handleInputChange}
-              placeholder="Property location"
+              placeholder="Property address"
             />
           </FormControl>
+          
+          <HStack spacing={4}>
+            <FormControl isRequired>
+              <FormLabel>City</FormLabel>
+              <Input
+                name="city"
+                value={formData.city}
+                onChange={handleInputChange}
+                placeholder="City"
+              />
+            </FormControl>
+            
+            <FormControl isRequired>
+              <FormLabel>State</FormLabel>
+              <Input
+                name="state"
+                value={formData.state}
+                onChange={handleInputChange}
+                placeholder="State"
+              />
+            </FormControl>
+          </HStack>
 
           <FormControl isRequired>
             <FormLabel>Price per day (SOL)</FormLabel>
@@ -169,6 +212,30 @@ export const PropertyListingForm: React.FC = () => {
               <NumberInputField placeholder="0.1" />
             </NumberInput>
           </FormControl>
+          
+          <HStack spacing={4}>
+            <FormControl isRequired>
+              <FormLabel>Minimum Stay (days)</FormLabel>
+              <NumberInput 
+                min={1} 
+                value={formData.min_duration} 
+                onChange={(value) => handleDurationChange('min_duration', value)}
+              >
+                <NumberInputField placeholder="1" />
+              </NumberInput>
+            </FormControl>
+            
+            <FormControl isRequired>
+              <FormLabel>Maximum Stay (days)</FormLabel>
+              <NumberInput 
+                min={1} 
+                value={formData.max_duration} 
+                onChange={(value) => handleDurationChange('max_duration', value)}
+              >
+                <NumberInputField placeholder="30" />
+              </NumberInput>
+            </FormControl>
+          </HStack>
 
           <FormControl>
             <FormLabel>Amenities (comma-separated)</FormLabel>

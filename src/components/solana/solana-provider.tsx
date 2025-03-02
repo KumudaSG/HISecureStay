@@ -17,9 +17,29 @@ import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adap
 
 require('@solana/wallet-adapter-react-ui/styles.css')
 
-export const WalletButton = dynamic(async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton, {
-  ssr: false,
-})
+// Import extended wallet types
+import { useWallet as useAppWallet } from '@/context/WalletContext';
+
+// Create a custom wallet button that extends the functionality
+const CustomWalletMultiButton = dynamic(
+  async () => {
+    const { WalletMultiButton } = await import('@solana/wallet-adapter-react-ui');
+    const { default: RoleSelector } = await import('./wallet-role-selector');
+    return {
+      default: (props: any) => {
+        // Inject the role selector by overriding WalletMultiButton
+        const WalletButton = ({...props}: any) => {
+          return <RoleSelector><WalletMultiButton {...props} /></RoleSelector>;
+        };
+        return <WalletButton {...props} />;
+      },
+    };
+  },
+  { ssr: false }
+);
+
+// Export the custom wallet button
+export const WalletButton = CustomWalletMultiButton;
 
 export function SolanaProvider({ children }: { children: ReactNode }) {
   const { cluster } = useCluster()

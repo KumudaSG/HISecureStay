@@ -6,19 +6,43 @@ import { mockAccessKeysData } from './mockData/accessKeys';
 
 // Type definitions for the adapter
 export interface PropertyData {
-  id: number;
-  title: string;
+  id: number | string;
+  title?: string;
+  name?: string;
   description: string;
-  location: string;
-  price: number;
+  location: string | {
+    address: string;
+    city: string;
+    state: string;
+  };
+  price?: number;
+  price_per_day?: number;
+  min_duration?: number;
+  max_duration?: number;
   images: string[];
   owner: string;
   amenities: string[];
-  availability: boolean;
+  availability?: boolean;
+  is_available?: boolean;
   smartLockId?: string;
+  smart_lock_id?: string;
   currentTenant?: string;
   rentalStart?: string;
   rentalEnd?: string;
+  created_at?: string;
+}
+
+export interface RentalData {
+  id: string;
+  property_id: number | string;
+  property_name: string;
+  tenant: string;
+  start_date: string;
+  end_date: string;
+  status: 'active' | 'completed' | 'upcoming';
+  amount_paid: number;
+  security_deposit: number;
+  property: PropertyData;
 }
 
 export interface SmartLockData {
@@ -76,7 +100,32 @@ class ApiAdapter {
 
   async getAllProperties(): Promise<PropertyData[]> {
     if (this.isDemoMode) {
-      return mockPropertiesData;
+      // Try to fetch properties from localStorage first for persistence
+      try {
+        const storedProperties = localStorage.getItem('mockProperties');
+        if (storedProperties) {
+          const parsedProperties = JSON.parse(storedProperties);
+          // If we have stored properties, combine them with the mock data
+          // but avoid duplicates by checking IDs
+          const existingIds = new Set(mockPropertiesData.map(p => p.id));
+          const newPropertiesToAdd = parsedProperties.filter(p => !existingIds.has(p.id));
+          
+          // Add new properties to the mock data array
+          if (newPropertiesToAdd.length > 0) {
+            mockPropertiesData.push(...newPropertiesToAdd);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load properties from localStorage:', err);
+      }
+      
+      // Sort properties by creation date (newest first)
+      return [...mockPropertiesData].sort((a, b) => {
+        if (a.created_at && b.created_at) {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        }
+        return 0;
+      });
     } else {
       try {
         const response = await propertyAPI.getAllProperties();
@@ -84,6 +133,23 @@ class ApiAdapter {
       } catch (error) {
         console.error('Error fetching properties:', error);
         console.warn('Falling back to mock data');
+        
+        // Try to get data from localStorage as a fallback
+        try {
+          const storedProperties = localStorage.getItem('mockProperties');
+          if (storedProperties) {
+            const parsedProperties = JSON.parse(storedProperties);
+            return [...mockPropertiesData, ...parsedProperties].sort((a, b) => {
+              if (a.created_at && b.created_at) {
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+              }
+              return 0;
+            });
+          }
+        } catch (err) {
+          console.warn('Could not load properties from localStorage:', err);
+        }
+        
         return mockPropertiesData;
       }
     }
@@ -114,20 +180,76 @@ class ApiAdapter {
 
   async createProperty(propertyData: Partial<PropertyData>): Promise<PropertyData> {
     if (this.isDemoMode) {
-      const newId = Math.max(...mockPropertiesData.map(p => p.id)) + 1;
+      const newId = Math.max(...mockPropertiesData.map(p => typeof p.id === 'number' ? p.id : 0)) + 1;
+      
+      // Create a property with consistent data format that works with both API structures
       const newProperty = {
         id: newId,
-        title: propertyData.title || 'New Property',
+        // Support both formats - name and title
+        name: propertyData.name || propertyData.title || 'New Property',
+        title: propertyData.title || propertyData.name || 'New Property',
         description: propertyData.description || 'No description provided',
-        location: propertyData.location || 'Unknown location',
+        
+        // Properly handle location formats (string or object)
+        location: typeof propertyData.location === 'string' 
+          ? propertyData.location 
+          : propertyData.location || 'Unknown location',
+          
+        // Support address format if provided as an object
+        ...(typeof propertyData.location === 'object' && {
+          location: {
+            address: propertyData.location.address || '',
+            city: propertyData.location.city || '',
+            state: propertyData.location.state || '',
+          }
+        }),
+        
+        // Support both price formats
         price: propertyData.price || 0,
-        images: propertyData.images || [],
+        price_per_day: propertyData.price_per_day || propertyData.price || 0,
+        
+        // Duration fields
+        min_duration: propertyData.min_duration || 1,
+        max_duration: propertyData.max_duration || 30,
+        
+        // Support image arrays
+        images: propertyData.images || ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267'],
+        
+        // Owner information
         owner: propertyData.owner || 'unknown',
+        
+        // Amenities array
         amenities: propertyData.amenities || [],
+        
+        // Support both availability formats
         availability: propertyData.availability !== undefined ? propertyData.availability : true,
+        is_available: propertyData.is_available !== undefined ? propertyData.is_available : 
+                     (propertyData.availability !== undefined ? propertyData.availability : true),
+        
+        // Support both smart lock ID formats
+        smartLockId: propertyData.smartLockId || `lock-${newId}`,
+        smart_lock_id: propertyData.smart_lock_id || propertyData.smartLockId || `lock-${newId}`,
+        
+        // Add a timestamp for sorting
+        created_at: new Date().toISOString(),
       } as PropertyData;
       
+      // Store in mock data array
       mockPropertiesData.push(newProperty);
+      
+      // Save to localStorage for persistence
+      try {
+        // Get existing data or initialize empty array
+        const storedProperties = localStorage.getItem('mockProperties');
+        const parsedProperties = storedProperties ? JSON.parse(storedProperties) : [];
+        
+        // Add new property and save back to localStorage
+        parsedProperties.push(newProperty);
+        localStorage.setItem('mockProperties', JSON.stringify(parsedProperties));
+      } catch (err) {
+        console.warn('Could not save to localStorage:', err);
+      }
+      
       return newProperty;
     } else {
       try {
@@ -137,20 +259,51 @@ class ApiAdapter {
         console.error('Error creating property:', error);
         console.warn('Falling back to mock implementation');
         
-        const newId = Math.max(...mockPropertiesData.map(p => p.id)) + 1;
+        // Use the same creation logic as above for consistency
+        const newId = Math.max(...mockPropertiesData.map(p => typeof p.id === 'number' ? p.id : 0)) + 1;
+        
         const newProperty = {
           id: newId,
-          title: propertyData.title || 'New Property',
+          name: propertyData.name || propertyData.title || 'New Property',
+          title: propertyData.title || propertyData.name || 'New Property',
           description: propertyData.description || 'No description provided',
-          location: propertyData.location || 'Unknown location',
+          location: typeof propertyData.location === 'string' 
+            ? propertyData.location 
+            : propertyData.location || 'Unknown location',
+          ...(typeof propertyData.location === 'object' && {
+            location: {
+              address: propertyData.location.address || '',
+              city: propertyData.location.city || '',
+              state: propertyData.location.state || '',
+            }
+          }),
           price: propertyData.price || 0,
-          images: propertyData.images || [],
+          price_per_day: propertyData.price_per_day || propertyData.price || 0,
+          min_duration: propertyData.min_duration || 1,
+          max_duration: propertyData.max_duration || 30,
+          images: propertyData.images || ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267'],
           owner: propertyData.owner || 'unknown',
           amenities: propertyData.amenities || [],
           availability: propertyData.availability !== undefined ? propertyData.availability : true,
+          is_available: propertyData.is_available !== undefined ? propertyData.is_available : 
+                      (propertyData.availability !== undefined ? propertyData.availability : true),
+          smartLockId: propertyData.smartLockId || `lock-${newId}`,
+          smart_lock_id: propertyData.smart_lock_id || propertyData.smartLockId || `lock-${newId}`,
+          created_at: new Date().toISOString(),
         } as PropertyData;
         
         mockPropertiesData.push(newProperty);
+        
+        // Also save to localStorage
+        try {
+          const storedProperties = localStorage.getItem('mockProperties');
+          const parsedProperties = storedProperties ? JSON.parse(storedProperties) : [];
+          parsedProperties.push(newProperty);
+          localStorage.setItem('mockProperties', JSON.stringify(parsedProperties));
+        } catch (err) {
+          console.warn('Could not save to localStorage:', err);
+        }
+        
         return newProperty;
       }
     }
@@ -467,6 +620,110 @@ class ApiAdapter {
         return mockTransactionsData.filter(
           tx => tx.from === userId || tx.to === userId
         );
+      }
+    }
+  }
+  
+  async getDigitalKeys(walletAddress: string): Promise<any[]> {
+    if (this.isDemoMode) {
+      // Generate a few sample digital keys based on the properties
+      const mockDigitalKeys = mockPropertiesData.slice(0, 3).map((property, index) => {
+        // Create staggered key expiration dates
+        const today = new Date();
+        let expiryDate = new Date();
+        
+        if (index === 0) {
+          // First key expires in 7 days
+          expiryDate.setDate(today.getDate() + 7);
+        } else if (index === 1) {
+          // Second key expires in 30 days
+          expiryDate.setDate(today.getDate() + 30);
+        } else {
+          // Other keys are set to have already expired
+          expiryDate = new Date(today.getTime() - (7 * 24 * 60 * 60 * 1000));
+        }
+        
+        return {
+          id: `key-${property.id}`,
+          propertyName: property.name || property.title || `Property ${property.id}`,
+          propertyId: property.id,
+          status: index < 2 ? 'active' : 'expired',
+          validUntil: expiryDate.toISOString(),
+          accessCode: `ACCESS-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+        };
+      });
+      
+      return mockDigitalKeys;
+    } else {
+      try {
+        const response = await propertyAPI.getDigitalKeys(walletAddress);
+        return response.data.keys || [];
+      } catch (error) {
+        console.error(`Error fetching digital keys for user ${walletAddress}:`, error);
+        console.warn('Falling back to mock implementation');
+        
+        // Generate sample keys as fallback
+        const mockDigitalKeys = mockPropertiesData.slice(0, 3).map((property, index) => {
+          const today = new Date();
+          let expiryDate = new Date();
+          
+          if (index === 0) {
+            expiryDate.setDate(today.getDate() + 7);
+          } else if (index === 1) {
+            expiryDate.setDate(today.getDate() + 30);
+          } else {
+            expiryDate = new Date(today.getTime() - (7 * 24 * 60 * 60 * 1000));
+          }
+          
+          return {
+            id: `key-${property.id}`,
+            propertyName: property.name || property.title || `Property ${property.id}`,
+            propertyId: property.id,
+            status: index < 2 ? 'active' : 'expired',
+            validUntil: expiryDate.toISOString(),
+            accessCode: `ACCESS-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+          };
+        });
+        
+        return mockDigitalKeys;
+      }
+    }
+  }
+  
+  async getMyRentals(walletAddress: string): Promise<PropertyData[]> {
+    if (this.isDemoMode) {
+      // Create simplified sample rental properties for demo purposes
+      const demoRentals = mockPropertiesData.slice(0, 3).map((p) => {
+        return {
+          ...p,
+          id: `rental-${p.id}`,
+          currentTenant: walletAddress,
+          is_available: false,
+          availability: false
+        } as PropertyData;
+      });
+      
+      return demoRentals;
+    } else {
+      try {
+        const response = await propertyAPI.getMyRentals(walletAddress);
+        return response.data.rentals || [];
+      } catch (error) {
+        console.error(`Error fetching rentals for user ${walletAddress}:`, error);
+        console.warn('Falling back to mock implementation');
+        
+        // Create simplified sample rental properties as a fallback
+        const demoRentals = mockPropertiesData.slice(0, 3).map((p) => {
+          return {
+            ...p,
+            id: `rental-${p.id}`,
+            currentTenant: walletAddress,
+            is_available: false,
+            availability: false
+          } as PropertyData;
+        });
+        
+        return demoRentals;
       }
     }
   }
