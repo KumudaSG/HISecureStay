@@ -7,7 +7,7 @@ export const mockPropertiesData: PropertyData[] = [
     title: 'Modern Downtown Apartment',
     description: 'Sleek modern apartment in the heart of downtown with amazing city views. Features include high ceilings, hardwood floors, and state-of-the-art appliances.',
     location: 'Chicago, IL',
-    price: 175,
+    price: 3500000000, // 3.5 SOL in lamports
     images: [
       'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267',
       'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688',
@@ -22,7 +22,7 @@ export const mockPropertiesData: PropertyData[] = [
     title: 'Cozy Studio Near Campus',
     description: 'Perfect for students! This cozy studio is within walking distance to the university campus, restaurants, and shops.',
     location: 'Urbana-Champaign, IL',
-    price: 85,
+    price: 3200000000, // 3.2 SOL in lamports
     images: [
       'https://images.unsplash.com/photo-1505691938895-1758d7feb511',
     ],
@@ -36,7 +36,7 @@ export const mockPropertiesData: PropertyData[] = [
     title: 'Luxury Lakefront Condo',
     description: 'Stunning lakefront condo with panoramic views of Lake Michigan. Features include a private balcony, high-end finishes, and 24/7 doorman.',
     location: 'Chicago, IL',
-    price: 250,
+    price: 4800000000, // 4.8 SOL in lamports
     images: [
       'https://images.unsplash.com/photo-1493809842364-78817add7ffb',
       'https://images.unsplash.com/photo-1501183638710-841dd1904471',
@@ -51,7 +51,7 @@ export const mockPropertiesData: PropertyData[] = [
     title: 'Charming Bungalow with Garden',
     description: 'Charming historic bungalow with a beautiful garden. Quiet neighborhood close to parks and public transportation.',
     location: 'Evanston, IL',
-    price: 120,
+    price: 3700000000, // 3.7 SOL in lamports
     images: [
       'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6',
     ],
@@ -68,7 +68,7 @@ export const mockPropertiesData: PropertyData[] = [
     title: 'Tech-Enabled Smart Apartment',
     description: 'Fully automated smart apartment with voice control, remote access, and energy-efficient systems. Perfect for tech enthusiasts!',
     location: 'Chicago, IL',
-    price: 200,
+    price: 4200000000, // 4.2 SOL in lamports
     images: [
       'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00',
     ],

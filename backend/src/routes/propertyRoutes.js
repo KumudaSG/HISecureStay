@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
         id: 1,
         name: 'Beach House',
         description: 'Beautiful beach house with ocean view',
-        price_per_day: 1000000000, // 1 SOL in lamports
+        price_per_day: 3500000000, // 3.5 SOL in lamports
         min_duration: 1,
         max_duration: 30,
         smart_lock_id: 'LOCK123',
@@ -45,7 +45,7 @@ router.get('/', async (req, res) => {
         id: 2,
         name: 'Mountain Cabin',
         description: 'Cozy cabin in the mountains with stunning views',
-        price_per_day: 500000000, // 0.5 SOL in lamports
+        price_per_day: 4200000000, // 4.2 SOL in lamports
         min_duration: 2,
         max_duration: 14,
         smart_lock_id: 'LOCK456',
@@ -95,7 +95,7 @@ router.get('/my-rentals', async (req, res) => {
             name: 'Mountain Cabin',
             startDate: '2025-03-01',
             endDate: '2025-03-07',
-            totalPrice: 3500000000,
+            totalPrice: 4200000000 * 7,
             status: 'active',
             smartLockAccess: true,
             image: 'https://images.unsplash.com/photo-1518563259479-d003c05a6507'
@@ -122,7 +122,7 @@ router.get('/:id', async (req, res) => {
       description: propertyId === 1 
         ? 'Beautiful beach house with ocean view'
         : 'Cozy cabin in the mountains with stunning views',
-      price_per_day: propertyId === 1 ? 1000000000 : 500000000,
+      price_per_day: propertyId === 1 ? 3500000000 : 4200000000,
       min_duration: propertyId === 1 ? 1 : 2,
       max_duration: propertyId === 1 ? 30 : 14,
       smart_lock_id: propertyId === 1 ? 'LOCK123' : 'LOCK456',
@@ -244,7 +244,7 @@ router.post('/:id/book', async (req, res) => {
       duration_days,
       start_date: result.rentalStart,
       end_date: result.rentalEnd,
-      total_price: propertyId === 1 ? 1000000000 * duration_days : 500000000 * duration_days,
+      total_price: propertyId === 1 ? 3500000000 * duration_days : 4200000000 * duration_days,
       status: 'confirmed',
       blockchain_tx: result.transactionSignature
     };
@@ -351,7 +351,7 @@ router.get('/user/:walletAddress', async (req, res) => {
           id: 1,
           name: 'Beach House',
           description: 'Beautiful beach house with ocean view',
-          price_per_day: 1000000000,
+          price_per_day: 3500000000,
           min_duration: 1,
           max_duration: 30,
           smart_lock_id: 'LOCK123',

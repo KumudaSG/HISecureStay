@@ -16,23 +16,19 @@ import {
 import { useRouter } from 'next/navigation';
 
 interface Property {
-  id: string;
-  name: string;
+  id: number;
+  title: string;
   description: string;
-  price_per_day: number;
-  min_duration: number;
-  max_duration: number;
-  smart_lock_id: string;
-  is_available: boolean;
-  owner: string;
-  location: {
-    address: string;
-    city: string;
-    state: string;
-  };
+  price: number;
+  location: string;
   images: string[];
+  owner: string;
   amenities: string[];
-  status: string;
+  availability: boolean;
+  smartLockId?: string;
+  currentTenant?: string;
+  rentalStart?: string;
+  rentalEnd?: string;
 }
 
 interface PropertyCardProps {
@@ -45,9 +41,16 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.600', 'gray.300');
   
-  // Format price from lamports (1 SOL = 1,000,000,000 lamports)
-  const formatPrice = (lamports: number) => {
-    return (lamports / 1000000000).toFixed(2);
+  // Format price from dollars to SOL (for demo purposes)
+  const formatPrice = (price: number) => {
+    return (price / 1000000000).toFixed(2);
+  };
+
+  // Format date to readable format
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   };
   
   return (
@@ -70,7 +73,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
       {/* Property Image */}
       <Image 
         src={property.images[0] || 'https://via.placeholder.com/400x250?text=Property'} 
-        alt={property.name}
+        alt={property.title}
         h="200px"
         w="100%"
         objectFit="cover"
@@ -81,38 +84,40 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         <Badge 
           borderRadius="full" 
           px="2" 
-          colorScheme={property.is_available ? 'green' : 'red'}
+          colorScheme={property.availability ? 'green' : 'red'}
         >
-          {property.is_available ? 'Available' : 'Booked'}
+          {property.availability ? 'Available' : 'Booked'}
         </Badge>
       </Box>
       
       <Box p={5}>
         <VStack align="start" spacing={3}>
-          {/* Property Name */}
+          {/* Property Title */}
           <Heading size="md" lineHeight="tight" isTruncated>
-            {property.name}
+            {property.title}
           </Heading>
           
           {/* Location */}
           <Text fontSize="sm" color={textColor}>
-            {property.location.city}, {property.location.state}
+            {property.location}
           </Text>
           
           {/* Price */}
           <HStack>
             <Text fontWeight="bold" fontSize="xl">
-              {formatPrice(property.price_per_day)} SOL
+              {formatPrice(property.price)} SOL
             </Text>
             <Text fontSize="sm" color="gray.500">
               / day
             </Text>
           </HStack>
           
-          {/* Duration */}
-          <Text fontSize="sm">
-            {property.min_duration} to {property.max_duration} days
-          </Text>
+          {/* Rental Period if booked */}
+          {!property.availability && property.rentalStart && property.rentalEnd && (
+            <Text fontSize="sm" color="red.500">
+              Booked: {formatDate(property.rentalStart)} - {formatDate(property.rentalEnd)}
+            </Text>
+          )}
           
           {/* Amenities */}
           <Box>
@@ -146,7 +151,10 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
             mt={2} 
             colorScheme="blue" 
             w="full"
-            onClick={() => router.push(`/properties/${property.id}`)}
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/properties/${property.id}`);
+            }}
           >
             View Details
           </Button>
