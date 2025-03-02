@@ -266,4 +266,167 @@ router.post('/:id/complete', async (req, res) => {
   }
 });
 
+// Get properties owned by a user
+router.get('/owner/:publicKey', async (req, res) => {
+  try {
+    const publicKey = req.params.publicKey;
+    
+    // Mock data for demo
+    const properties = [
+      {
+        id: "1",
+        name: 'Beach House',
+        description: 'Beautiful beach house with ocean view',
+        price_per_day: 1000000000,
+        location: {
+          city: 'Miami',
+          state: 'FL',
+          address: '123 Ocean Drive'
+        },
+        images: [
+          'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2',
+          'https://images.unsplash.com/photo-1518563259479-d003c05a6507'
+        ],
+        status: 'available',
+        min_duration: 1,
+        max_duration: 30,
+        smart_lock_id: 'LOCK123',
+        is_available: true,
+        owner: publicKey,
+        amenities: ['Wi-Fi', 'Kitchen', 'Pool', 'Beachfront']
+      },
+      {
+        id: "2",
+        name: 'Mountain Cabin',
+        description: 'Cozy cabin in the mountains with stunning views',
+        price_per_day: 500000000,
+        location: {
+          city: 'Aspen',
+          state: 'CO',
+          address: '456 Mountain Trail'
+        },
+        images: [
+          'https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8',
+          'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b'
+        ],
+        status: 'rented',
+        rental_start: new Date().toISOString(),
+        rental_end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        min_duration: 2,
+        max_duration: 14,
+        smart_lock_id: 'LOCK456',
+        is_available: false,
+        owner: publicKey,
+        amenities: ['Wi-Fi', 'Fireplace', 'Hot Tub', 'Mountain Views']
+      }
+    ];
+    
+    res.json(formatResponse(true, { properties }));
+  } catch (error) {
+    console.error('Error fetching properties for owner:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to fetch properties'));
+  }
+});
+
+// Get properties rented by a user
+router.get('/tenant/:publicKey', async (req, res) => {
+  try {
+    const publicKey = req.params.publicKey;
+    
+    // Mock data for demo
+    const rentals = [
+      {
+        id: "3",
+        name: 'City Apartment',
+        description: 'Modern apartment in the heart of the city',
+        price_per_day: 750000000,
+        location: {
+          city: 'New York',
+          state: 'NY',
+          address: '789 Broadway'
+        },
+        images: [
+          'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688',
+          'https://images.unsplash.com/photo-1533779283484-8ad4940aa3a8'
+        ],
+        status: 'rented',
+        rental_start: new Date().toISOString(),
+        rental_end: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+        min_duration: 1,
+        max_duration: 14,
+        smart_lock_id: 'LOCK789',
+        is_available: false,
+        owner: 'DifferentOwnerPublicKey',
+        amenities: ['Wi-Fi', 'Gym', 'Rooftop', 'Doorman']
+      }
+    ];
+    
+    res.json(formatResponse(true, { rentals }));
+  } catch (error) {
+    console.error('Error fetching rentals for tenant:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to fetch rentals'));
+  }
+});
+
+// Get digital keys for a user
+router.get('/keys/:publicKey', async (req, res) => {
+  try {
+    const publicKey = req.params.publicKey;
+    
+    // Mock data for demo
+    const keys = [
+      {
+        id: 'key-1',
+        propertyName: 'City Apartment',
+        status: 'active',
+        validUntil: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+        accessCode: '1234'
+      }
+    ];
+    
+    res.json(formatResponse(true, { keys }));
+  } catch (error) {
+    console.error('Error fetching digital keys:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to fetch digital keys'));
+  }
+});
+
+// Access a property using a digital key
+router.post('/access/:lockId', async (req, res) => {
+  try {
+    const lockId = req.params.lockId;
+    const { publicKey } = req.body;
+    
+    if (!publicKey) {
+      return res.status(400).json(formatResponse(false, null, 'Public key is required'));
+    }
+    
+    // In a real implementation, we would verify the access rights
+    
+    res.json(formatResponse(true, { message: 'Access granted successfully' }));
+  } catch (error) {
+    console.error('Error accessing property:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to access property'));
+  }
+});
+
+// Revoke access to a property
+router.post('/revoke/:lockId', async (req, res) => {
+  try {
+    const lockId = req.params.lockId;
+    const { publicKey } = req.body;
+    
+    if (!publicKey) {
+      return res.status(400).json(formatResponse(false, null, 'Public key is required'));
+    }
+    
+    // In a real implementation, we would revoke the access rights
+    
+    res.json(formatResponse(true, { message: 'Access revoked successfully' }));
+  } catch (error) {
+    console.error('Error revoking access:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to revoke access'));
+  }
+});
+
 module.exports = router;

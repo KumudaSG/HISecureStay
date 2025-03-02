@@ -79,6 +79,36 @@ export const propertyAPI = {
     const response = await api.post(`/properties/${propertyId}/complete`);
     return response.data;
   },
+  
+  // Get properties owned by a user
+  getMyProperties: async (publicKey: string) => {
+    const response = await api.get(`/properties/owner/${publicKey}`);
+    return response.data;
+  },
+  
+  // Get properties rented by a user
+  getMyRentals: async (publicKey: string) => {
+    const response = await api.get(`/properties/tenant/${publicKey}`);
+    return response.data;
+  },
+  
+  // Get digital keys for a user
+  getDigitalKeys: async (publicKey: string) => {
+    const response = await api.get(`/properties/keys/${publicKey}`);
+    return response.data;
+  },
+  
+  // Access a property using a digital key
+  accessProperty: async (lockId: string, publicKey: string) => {
+    const response = await api.post(`/properties/access/${lockId}`, { publicKey });
+    return response.data;
+  },
+  
+  // Revoke access to a property
+  revokeAccess: async (lockId: string, publicKey: string) => {
+    const response = await api.post(`/properties/revoke/${lockId}`, { publicKey });
+    return response.data;
+  },
 };
 
 // API endpoints for smart locks

@@ -17,24 +17,10 @@ import {
 import { PropertyCard } from '@/components/property/property-card';
 import { propertyAPI } from '@/services/api';
 import { useAppWallet } from '@/context/WalletContext';
-
-interface Property {
-  id: string;
-  name: string;
-  description: string;
-  price_per_day: number;
-  location: {
-    city: string;
-    state: string;
-  };
-  images: string[];
-  status: string;
-  rental_start: string;
-  rental_end: string;
-}
+import { PropertyDisplayData, RentalResponse } from '@/types';
 
 export default function MyRentals() {
-  const [rentals, setRentals] = useState<Property[]>([]);
+  const [rentals, setRentals] = useState<PropertyDisplayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isConnected, publicKey } = useAppWallet();
@@ -50,7 +36,7 @@ export default function MyRentals() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await propertyAPI.getMyRentals(publicKey!);
+      const response = await propertyAPI.getMyRentals(publicKey!) as RentalResponse;
       if (response.success && response.data.rentals) {
         setRentals(response.data.rentals);
       } else {

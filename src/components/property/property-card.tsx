@@ -14,29 +14,10 @@ import {
   useColorModeValue
 } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
-
-interface Property {
-  id: string;
-  name: string;
-  description: string;
-  price_per_day: number;
-  min_duration: number;
-  max_duration: number;
-  smart_lock_id: string;
-  is_available: boolean;
-  owner: string;
-  location: {
-    address: string;
-    city: string;
-    state: string;
-  };
-  images: string[];
-  amenities: string[];
-  status: string;
-}
+import { PropertyDisplayData } from '@/types';
 
 interface PropertyCardProps {
-  property: Property;
+  property: PropertyDisplayData;
 }
 
 export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
@@ -49,6 +30,13 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
   const formatPrice = (lamports: number) => {
     return (lamports / 1000000000).toFixed(2);
   };
+  
+  // Default values for potentially missing properties
+  const isAvailable = property.is_available !== undefined ? property.is_available : 
+                     (property.status === 'available');
+  const minDuration = property.min_duration || 1;
+  const maxDuration = property.max_duration || 30;
+  const amenities = property.amenities || [];
   
   return (
     <Box 
@@ -81,9 +69,9 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         <Badge 
           borderRadius="full" 
           px="2" 
-          colorScheme={property.is_available ? 'green' : 'red'}
+          colorScheme={isAvailable ? 'green' : 'red'}
         >
-          {property.is_available ? 'Available' : 'Booked'}
+          {isAvailable ? 'Available' : 'Booked'}
         </Badge>
       </Box>
       
@@ -111,13 +99,13 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
           
           {/* Duration */}
           <Text fontSize="sm">
-            {property.min_duration} to {property.max_duration} days
+            {minDuration} to {maxDuration} days
           </Text>
           
           {/* Amenities */}
           <Box>
             <Flex flexWrap="wrap" gap={2} mt={2}>
-              {property.amenities.slice(0, 3).map((amenity, index) => (
+              {amenities.slice(0, 3).map((amenity, index) => (
                 <Badge 
                   key={index} 
                   borderRadius="full" 
@@ -128,14 +116,14 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
                   {amenity}
                 </Badge>
               ))}
-              {property.amenities.length > 3 && (
+              {amenities.length > 3 && (
                 <Badge 
                   borderRadius="full" 
                   px={2} 
                   colorScheme="gray"
                   variant="outline"
                 >
-                  +{property.amenities.length - 3} more
+                  +{amenities.length - 3} more
                 </Badge>
               )}
             </Flex>

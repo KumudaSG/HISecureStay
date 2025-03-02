@@ -2,60 +2,13 @@ import api, { propertyAPI, smartLockAPI } from './api';
 import { mockPropertiesData } from './mockData/properties';
 import { mockSmartLocksData } from './mockData/smartLocks';
 import { mockTransactionsData } from './mockData/transactions';
-
-// Type definitions for the adapter
-export interface PropertyData {
-  id: number;
-  title: string;
-  description: string;
-  location: string;
-  price: number;
-  images: string[];
-  owner: string;
-  amenities: string[];
-  availability: boolean;
-  smartLockId?: string;
-  currentTenant?: string;
-  rentalStart?: string;
-  rentalEnd?: string;
-}
-
-export interface SmartLockData {
-  id: string;
-  propertyId: number;
-  isLocked: boolean;
-  accessHistory: {
-    timestamp: string;
-    user: string;
-    action: 'lock' | 'unlock';
-    authorized: boolean;
-  }[];
-  authorizedUsers: string[];
-  batteryLevel: number;
-  status: 'online' | 'offline';
-}
-
-export interface TransactionData {
-  id: string;
-  type: 'booking' | 'payment' | 'refund' | 'deposit';
-  amount: number;
-  from: string;
-  to: string;
-  timestamp: string;
-  status: 'pending' | 'completed' | 'failed';
-  propertyId: number;
-  description: string;
-}
-
-export interface AccessKeyData {
-  id: string;
-  propertyId: number;
-  propertyTitle: string;
-  validFrom: string;
-  validTo: string;
-  isActive: boolean;
-  lastUsed?: string;
-}
+import {
+  PropertyData,
+  SmartLockData,
+  TransactionData,
+  AccessKeyData,
+  DigitalKeyData
+} from '../types';
 
 // Main API adapter class
 class ApiAdapter {
@@ -182,6 +135,160 @@ class ApiAdapter {
     } else {
       const response = await propertyAPI.generateAccessKey(propertyId, tenantData);
       return response.data;
+    }
+  }
+  
+  // Get properties owned by a user
+  async getMyProperties(publicKey: string): Promise<any> {
+    if (this.isDemoMode) {
+      // Filter properties where the owner matches the publicKey
+      const properties = mockPropertiesData.filter(p => p.owner === publicKey);
+      
+      // Format the response to match the expected structure in the component
+      return {
+        success: true,
+        data: {
+          properties: properties.map(p => ({
+            id: p.id.toString(),
+            name: p.title,
+            description: p.description,
+            price_per_day: p.price * 1000000000, // Convert to lamports
+            location: {
+              city: p.location.split(',')[0].trim(),
+              state: p.location.split(',')[1].trim(),
+              address: p.location,
+            },
+            images: p.images,
+            status: p.availability ? 'available' : 'booked',
+            min_duration: 1,
+            max_duration: 30,
+            smart_lock_id: p.smartLockId,
+            is_available: p.availability,
+            owner: p.owner,
+            amenities: p.amenities || [],
+          }))
+        }
+      };
+    } else {
+      return await propertyAPI.getMyProperties(publicKey);
+    }
+  }
+  
+  // Get properties rented by a user
+  async getMyRentals(publicKey: string): Promise<any> {
+    if (this.isDemoMode) {
+      // Filter properties where the currentTenant matches the publicKey
+      const rentals = mockPropertiesData.filter(p => p.currentTenant === publicKey);
+      
+      // Format the response to match the expected structure in the component
+      return {
+        success: true,
+        data: {
+          rentals: rentals.map(p => ({
+            id: p.id.toString(),
+            name: p.title,
+            description: p.description,
+            price_per_day: p.price * 1000000000, // Convert to lamports
+            location: {
+              city: p.location.split(',')[0].trim(),
+              state: p.location.split(',')[1].trim(),
+              address: p.location,
+            },
+            images: p.images,
+            status: 'rented',
+            rental_start: p.rentalStart,
+            rental_end: p.rentalEnd,
+            min_duration: 1,
+            max_duration: 30,
+            smart_lock_id: p.smartLockId,
+            is_available: false,
+            owner: p.owner,
+            amenities: p.amenities || [],
+          }))
+        }
+      };
+    } else {
+      return await propertyAPI.getMyRentals(publicKey);
+    }
+  }
+  
+  // Get digital keys for a user
+  async getDigitalKeys(publicKey: string): Promise<any> {
+    if (this.isDemoMode) {
+      // Get properties rented by the user
+      const rentedProperties = mockPropertiesData.filter(p => p.currentTenant === publicKey);
+      
+      // Create digital keys for each rented property
+      const keys = rentedProperties.map(property => {
+        const lock = mockSmartLocksData.find(l => l.propertyId === property.id);
+        
+        return {
+          id: lock ? lock.id : `lock-${property.id}`,
+          propertyName: property.title,
+          status: 'active' as const,
+          validUntil: property.rentalEnd || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          accessCode: `${Math.floor(1000 + Math.random() * 9000)}`,
+        };
+      });
+      
+      return {
+        success: true,
+        data: {
+          keys
+        }
+      };
+    } else {
+      return await propertyAPI.getDigitalKeys(publicKey);
+    }
+  }
+  
+  // Access a property using a digital key
+  async accessProperty(lockId: string, publicKey: string): Promise<any> {
+    if (this.isDemoMode) {
+      const lock = mockSmartLocksData.find(l => l.id === lockId);
+      if (!lock) {
+        return { success: false, message: 'Lock not found' };
+      }
+      
+      // Check if user is authorized
+      if (!lock.authorizedUsers.includes(publicKey)) {
+        return { success: false, message: 'Unauthorized access' };
+      }
+      
+      // Update lock status
+      const lockIndex = mockSmartLocksData.findIndex(l => l.id === lockId);
+      mockSmartLocksData[lockIndex].isLocked = false;
+      
+      // Add to access history
+      mockSmartLocksData[lockIndex].accessHistory.push({
+        timestamp: new Date().toISOString(),
+        user: publicKey,
+        action: 'unlock',
+        authorized: true
+      });
+      
+      return { success: true, message: 'Access granted' };
+    } else {
+      return await propertyAPI.accessProperty(lockId, publicKey);
+    }
+  }
+  
+  // Revoke access to a property
+  async revokeAccess(lockId: string, publicKey: string): Promise<any> {
+    if (this.isDemoMode) {
+      const lock = mockSmartLocksData.find(l => l.id === lockId);
+      if (!lock) {
+        return { success: false, message: 'Lock not found' };
+      }
+      
+      // Remove user from authorized users
+      const lockIndex = mockSmartLocksData.findIndex(l => l.id === lockId);
+      mockSmartLocksData[lockIndex].authorizedUsers = 
+        mockSmartLocksData[lockIndex].authorizedUsers.filter(user => user !== publicKey);
+      
+      return { success: true, message: 'Access revoked' };
+    } else {
+      return await propertyAPI.revokeAccess(lockId, publicKey);
     }
   }
 

@@ -1,4 +1,4 @@
-import { SmartLockData } from '../apiAdapter';
+import { SmartLockData } from '../../types';
 
 // Mock data for smart locks
 export const mockSmartLocksData: SmartLockData[] = [

@@ -1,4 +1,4 @@
-import { TransactionData } from '../apiAdapter';
+import { TransactionData } from '../../types';
 
 // Mock data for transactions with explicit type assertions for TypeScript
 export const mockTransactionsData: TransactionData[] = [

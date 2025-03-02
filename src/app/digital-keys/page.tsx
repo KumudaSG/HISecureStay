@@ -16,17 +16,10 @@ import {
 import { SmartLockCard } from '@/components/digital-keys/smart-lock-card';
 import { propertyAPI } from '@/services/api';
 import { useAppWallet } from '@/context/WalletContext';
-
-interface SmartLock {
-  id: string;
-  propertyName: string;
-  status: 'active' | 'inactive' | 'expired';
-  validUntil: string;
-  accessCode: string;
-}
+import { DigitalKeyData, AccessResponse } from '@/types';
 
 export default function DigitalKeys() {
-  const [locks, setLocks] = useState<SmartLock[]>([]);
+  const [locks, setLocks] = useState<DigitalKeyData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isConnected, publicKey } = useAppWallet();
@@ -58,7 +51,7 @@ export default function DigitalKeys() {
 
   const handleAccess = async (lockId: string) => {
     try {
-      const response = await propertyAPI.accessProperty(lockId, publicKey!);
+      const response = await propertyAPI.accessProperty(lockId, publicKey!) as AccessResponse;
       if (response.success) {
         toast({
           title: 'Success',
@@ -68,7 +61,7 @@ export default function DigitalKeys() {
           isClosable: true,
         });
       } else {
-        throw new Error('Failed to access property');
+        throw new Error(response.message || 'Failed to access property');
       }
     } catch (error) {
       toast({
@@ -83,7 +76,7 @@ export default function DigitalKeys() {
 
   const handleRevoke = async (lockId: string) => {
     try {
-      const response = await propertyAPI.revokeAccess(lockId, publicKey!);
+      const response = await propertyAPI.revokeAccess(lockId, publicKey!) as AccessResponse;
       if (response.success) {
         toast({
           title: 'Success',
@@ -94,7 +87,7 @@ export default function DigitalKeys() {
         });
         fetchDigitalKeys(); // Refresh the list
       } else {
-        throw new Error('Failed to revoke access');
+        throw new Error(response.message || 'Failed to revoke access');
       }
     } catch (error) {
       toast({

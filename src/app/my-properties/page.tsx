@@ -19,22 +19,10 @@ import { useRouter } from 'next/navigation';
 import { PropertyCard } from '@/components/property/property-card';
 import { propertyAPI } from '@/services/api';
 import { useAppWallet } from '@/context/WalletContext';
-
-interface Property {
-  id: string;
-  name: string;
-  description: string;
-  price_per_day: number;
-  location: {
-    city: string;
-    state: string;
-  };
-  images: string[];
-  status: string;
-}
+import { PropertyDisplayData } from '@/types';
 
 export default function MyProperties() {
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<PropertyDisplayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isConnected, publicKey } = useAppWallet();

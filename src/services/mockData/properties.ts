@@ -1,4 +1,4 @@
-import { PropertyData } from '../apiAdapter';
+import { PropertyData } from '../../types';
 
 // Mock data for properties
 export const mockPropertiesData: PropertyData[] = [
