@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import { 
   Box, 
   Flex, 
@@ -25,6 +27,12 @@ const Navbar: React.FC = () => {
   const router = useRouter();
   const { publicKey, isConnected, connect, disconnect, walletType, setWalletType, balance } = useWallet();
   const { isDemoMode, toggleMode } = useMode();
+  const [mounted, setMounted] = useState(false);
+  
+  // Only render component after mount to avoid hydration issues
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // Handle wallet connection
   const handleConnect = async () => {
@@ -41,6 +49,11 @@ const Navbar: React.FC = () => {
   const truncatePublicKey = (key: string) => {
     return `${key.slice(0, 4)}...${key.slice(-4)}`;
   };
+  
+  // Don't render anything until client-side
+  if (!mounted) {
+    return null;
+  }
   
   return (
     <Box as="nav" bg="blue.800" p={4} color="white" boxShadow="md">

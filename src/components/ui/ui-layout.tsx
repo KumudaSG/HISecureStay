@@ -9,32 +9,14 @@ import toast, { Toaster } from 'react-hot-toast'
 import { AccountChecker } from '../account/account-ui'
 import { ClusterChecker, ClusterUiSelect, ExplorerLink } from '../cluster/cluster-ui'
 import { WalletButton } from '../solana/solana-provider'
+import Navbar from './navbar'
 
 export function UiLayout({ children, links }: { children: ReactNode; links: { label: string; path: string }[] }) {
   const pathname = usePathname()
 
   return (
     <div className="h-full flex flex-col">
-      <div className="navbar bg-black text-white flex-col md:flex-row space-y-2 md:space-y-0">
-        <div className="flex-1">
-          <Link className="btn btn-ghost normal-case text-xl text-white" href="/">
-            SecureStay
-          </Link>
-          <ul className="menu menu-horizontal px-1 space-x-2">
-            {links.map(({ label, path }) => (
-              <li key={path}>
-                <Link className={`text-white hover:text-gray-300 ${pathname.startsWith(path) ? 'active' : ''}`} href={path}>
-                  {label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="flex-none space-x-2">
-          <WalletButton />
-          <ClusterUiSelect />
-        </div>
-      </div>
+      <Navbar />
       <ClusterChecker>
         <AccountChecker />
       </ClusterChecker>

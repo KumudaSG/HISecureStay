@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
 interface ModeContextType {
@@ -22,26 +24,40 @@ interface ModeProviderProps {
 export const ModeProvider: React.FC<ModeProviderProps> = ({ children }) => {
   // Default to demo mode for hackathon presentation, but allow switching
   const [isDemoMode, setIsDemoMode] = useState<boolean>(true);
+  const [mounted, setMounted] = useState(false);
 
-  // Check if mode preference was previously set
+  // Check if mode preference was previously set - client-side only
   useEffect(() => {
+    // Only run on client-side
+    if (typeof window === 'undefined') return;
+    
     const savedMode = localStorage.getItem('appMode');
     if (savedMode) {
       setIsDemoMode(savedMode === 'demo');
     }
+    
+    setMounted(true);
   }, []);
 
   // Toggle between demo and real mode
   const toggleMode = () => {
     const newMode = !isDemoMode;
     setIsDemoMode(newMode);
-    localStorage.setItem('appMode', newMode ? 'demo' : 'real');
+    
+    // Only use localStorage on client-side
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('appMode', newMode ? 'demo' : 'real');
+    }
   };
 
   // Set mode directly
   const handleSetDemoMode = (isDemoMode: boolean) => {
     setIsDemoMode(isDemoMode);
-    localStorage.setItem('appMode', isDemoMode ? 'demo' : 'real');
+    
+    // Only use localStorage on client-side
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('appMode', isDemoMode ? 'demo' : 'real');
+    }
   };
 
   return (

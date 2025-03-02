@@ -5,6 +5,7 @@ import { UiLayout } from '@/components/ui/ui-layout'
 import { ReactQueryProvider } from './react-query-provider'
 import { ChakraProvider } from '@chakra-ui/react'
 import { WalletProvider } from '@/context/WalletContext'
+import { ModeProvider } from '@/context/ModeContext'
 
 export const metadata = {
   title: 'SecureStay',
@@ -26,9 +27,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ChakraProvider>
             <ClusterProvider>
               <SolanaProvider>
-                <WalletProvider>
-                  <UiLayout links={links}>{children}</UiLayout>
-                </WalletProvider>
+                <ModeProvider>
+                  <WalletProvider>
+                    <UiLayout links={links}>{children}</UiLayout>
+                  </WalletProvider>
+                </ModeProvider>
               </SolanaProvider>
             </ClusterProvider>
           </ChakraProvider>
