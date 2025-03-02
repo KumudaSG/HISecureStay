@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Keys Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .button.locked {
+            background-color: #f44336;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Digital Keys Test</h1>
+    
+    <div>
+        <button id="fetchKeysBtn" class="button">Fetch Digital Keys</button>
+    </div>
+    
+    <h2>Digital Keys</h2>
+    <div id="keysContainer"></div>
+    
+    <h2>API Response</h2>
+    <pre id="responseOutput"></pre>
+    
+    <script>
+        const API_URL = 'http://localhost:3003/api';
+        const WALLET_ADDRESS = 'demo-wallet-address';
+        
+        document.getElementById('fetchKeysBtn').addEventListener('click', fetchDigitalKeys);
+        
+        async function fetchDigitalKeys() {
+            try {
+                const response = await fetch(`${API_URL}/properties/digital-keys/${WALLET_ADDRESS}`);
+                const data = await response.json();
+                
+                // Display the raw response
+                document.getElementById('responseOutput').textContent = JSON.stringify(data, null, 2);
+                
+                // Clear previous keys
+                const keysContainer = document.getElementById('keysContainer');
+                keysContainer.innerHTML = '';
+                
+                if (data.success && data.data.keys && data.data.keys.length > 0) {
+                    // Display each key as a card
+                    data.data.keys.forEach(key => {
+                        const keyCard = document.createElement('div');
+                        keyCard.className = 'card';
+                        
+                        const validUntil = new Date(key.validUntil);
+                        const isValid = validUntil > new Date();
+                        
+                        keyCard.innerHTML = `
+                            <h3>${key.propertyName}</h3>
+                            <p><strong>Key ID:</strong> ${key.id}</p>
+                            <p><strong>Status:</strong> ${key.status}</p>
+                            <p><strong>Valid Until:</strong> ${validUntil.toLocaleString()}</p>
+                            <p><strong>Access Code:</strong> ${key.accessCode || key.accessToken || 'N/A'}</p>
+                            <button class="button ${key.status === 'active' ? '' : 'locked'}" 
+                                    onclick="toggleLock('${key.id}', '${key.accessCode || key.accessToken || ''}')">
+                                ${key.status === 'active' ? 'Unlock Door' : 'Key Expired'}
+                            </button>
+                        `;
+                        
+                        keysContainer.appendChild(keyCard);
+                    });
+                } else {
+                    keysContainer.innerHTML = '<p>No digital keys found</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching digital keys:', error);
+                document.getElementById('responseOutput').textContent = `Error: ${error.message}`;
+                document.getElementById('keysContainer').innerHTML = '<p>Error fetching digital keys</p>';
+            }
+        }
+        
+        async function toggleLock(keyId, accessCode) {
+            try {
+                const response = await fetch(`${API_URL}/properties/access/${keyId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        accessToken: accessCode,
+                        walletAddress: WALLET_ADDRESS
+                    }),
+                });
+                
+                const data = await response.json();
+                alert(data.success ? 'Door unlocked successfully!' : 'Failed to unlock door');
+                
+                // Refresh keys after toggle
+                fetchDigitalKeys();
+            } catch (error) {
+                console.error('Error toggling lock:', error);
+                alert(`Error: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>
