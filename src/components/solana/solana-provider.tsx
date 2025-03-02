@@ -14,6 +14,7 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
 import { ReactNode, useCallback, useMemo } from 'react'
 import { useCluster } from '../cluster/cluster-data-access'
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets'
+import { BraveWalletAdapter } from '@solana/wallet-adapter-brave'
 
 require('@solana/wallet-adapter-react-ui/styles.css')
 
@@ -46,6 +47,7 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
   const endpoint = useMemo(() => cluster.endpoint, [cluster])
   const wallets = useMemo(
     () => [
+      new BraveWalletAdapter(),
       new PhantomWalletAdapter(),
       new SolflareWalletAdapter(),
     ],
