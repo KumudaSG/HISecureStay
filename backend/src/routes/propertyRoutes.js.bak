@@ -1,0 +1,220 @@
+/**
+ * Property Routes
+ * Handles API endpoints for property management
+ */
+
+const express = require('express');
+const router = express.Router();
+const propertyController = require('../controllers/propertyController');
+const { formatResponse } = require('../utils/helpers');
+
+// Get all properties
+router.get('/', propertyController.getAllProperties);
+
+// Get property by ID
+router.get('/:id', propertyController.getPropertyById);
+
+// Get properties by owner
+router.get('/owner/:publicKey', propertyController.getPropertiesByOwner);
+
+// Get properties rented by tenant
+router.get('/tenant/:publicKey', async (req, res) => {
+  try {
+    const tenantPublicKey = req.params.publicKey;
+    
+    // In a real implementation, this would fetch properties from a database
+    // For now, we'll return mock data
+    const rentals = [
+      {
+        id: '1',
+        name: 'Beach House',
+        description: 'Beautiful beach house with ocean view',
+        price_per_day: 1000000000,
+        location: {
+          city: 'Miami',
+          state: 'FL',
+        },
+        images: [
+          'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2',
+          'https://images.unsplash.com/photo-1518563259479-d003c05a6507'
+        ],
+        status: 'rented',
+        rental_start: '2025-02-25',
+        rental_end: '2025-03-05',
+        smart_lock_id: 'LOCK123',
+      }
+    ];
+    
+    res.json(formatResponse(true, { properties: rentals }));
+  } catch (error) {
+    console.error('Error fetching rentals:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to fetch rentals'));
+  }
+});
+
+// Get digital keys for a user
+router.get('/keys/:publicKey', async (req, res) => {
+  try {
+    const userPublicKey = req.params.publicKey;
+    
+    // In a real implementation, this would fetch keys from a database
+    // For now, we'll return mock data
+    const keys = [
+      {
+        id: 'key1',
+        propertyName: 'Beach House',
+        status: 'active',
+        validUntil: '2025-03-05',
+        accessCode: 'ABC123',
+      }
+    ];
+    
+    res.json(formatResponse(true, { keys }));
+  } catch (error) {
+    console.error('Error fetching keys:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to fetch keys'));
+  }
+});
+
+// Create a new property
+router.post('/', propertyController.createProperty);
+
+// Book a property
+router.post('/:id/book', async (req, res) => {
+  try {
+    const propertyId = parseInt(req.params.id);
+    const { tenant, duration_days } = req.body;
+    
+    // Validate required fields
+    if (!tenant || !duration_days) {
+      return res.status(400).json(formatResponse(false, null, 'Missing required fields'));
+    }
+    
+    // In a real implementation, we would:
+    // 1. Check if the property is available
+    // 2. Book the property on the blockchain
+    // 3. Update the property status in the database
+    
+    // For now, we'll simulate a successful booking
+    const now = new Date();
+    const endDate = new Date(now);
+    endDate.setDate(now.getDate() + duration_days);
+    
+    const bookingResult = {
+      property_id: propertyId,
+      tenant,
+      rental_start: now.toISOString().split('T')[0],
+      rental_end: endDate.toISOString().split('T')[0],
+      transaction_signature: 'sim_tx_signature_' + Math.random().toString(36).substring(2, 15),
+    };
+    
+    res.json(formatResponse(true, { booking: bookingResult }));
+  } catch (error) {
+    console.error('Error booking property:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to book property'));
+  }
+});
+
+// Generate access key for a property
+router.post('/:id/access', async (req, res) => {
+  try {
+    const propertyId = parseInt(req.params.id);
+    const { tenant } = req.body;
+    
+    // Validate required fields
+    if (!tenant) {
+      return res.status(400).json(formatResponse(false, null, 'Missing required fields'));
+    }
+    
+    // In a real implementation, we would:
+    // 1. Check if the tenant has booked the property
+    // 2. Generate an access key on the blockchain
+    // 3. Store the access key in the database
+    
+    // For now, we'll simulate a successful key generation
+    const now = new Date();
+    const endDate = new Date(now);
+    endDate.setDate(now.getDate() + 7); // 7-day access
+    
+    const accessKey = {
+      id: 'key_' + Math.random().toString(36).substring(2, 15),
+      property_id: propertyId,
+      tenant,
+      valid_from: now.toISOString(),
+      valid_to: endDate.toISOString(),
+      access_code: Math.random().toString(36).substring(2, 10).toUpperCase(),
+      transaction_signature: 'sim_tx_signature_' + Math.random().toString(36).substring(2, 15),
+    };
+    
+    res.json(formatResponse(true, { access_key: accessKey }));
+  } catch (error) {
+    console.error('Error generating access key:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to generate access key'));
+  }
+});
+
+// Access a property with a digital key
+router.post('/access/:lockId', async (req, res) => {
+  try {
+    const lockId = req.params.lockId;
+    const { publicKey } = req.body;
+    
+    // Validate required fields
+    if (!publicKey) {
+      return res.status(400).json(formatResponse(false, null, 'Missing required fields'));
+    }
+    
+    // In a real implementation, we would:
+    // 1. Check if the user has a valid access key for the property
+    // 2. Record the access attempt on the blockchain
+    // 3. Send a command to the smart lock to unlock
+    
+    // For now, we'll simulate a successful access
+    const accessResult = {
+      lock_id: lockId,
+      user: publicKey,
+      timestamp: new Date().toISOString(),
+      success: true,
+      transaction_signature: 'sim_tx_signature_' + Math.random().toString(36).substring(2, 15),
+    };
+    
+    res.json(formatResponse(true, { access: accessResult }));
+  } catch (error) {
+    console.error('Error accessing property:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to access property'));
+  }
+});
+
+// Revoke access to a property
+router.post('/revoke/:lockId', async (req, res) => {
+  try {
+    const lockId = req.params.lockId;
+    const { publicKey } = req.body;
+    
+    // Validate required fields
+    if (!publicKey) {
+      return res.status(400).json(formatResponse(false, null, 'Missing required fields'));
+    }
+    
+    // In a real implementation, we would:
+    // 1. Check if the user is the owner of the property
+    // 2. Revoke the access key on the blockchain
+    // 3. Update the access key status in the database
+    
+    // For now, we'll simulate a successful revocation
+    const revokeResult = {
+      lock_id: lockId,
+      revoked_user: publicKey,
+      timestamp: new Date().toISOString(),
+      success: true,
+      transaction_signature: 'sim_tx_signature_' + Math.random().toString(36).substring(2, 15),
+    };
+    
+    res.json(formatResponse(true, { revocation: revokeResult }));
+  } catch (error) {
+    console.error('Error revoking access:', error);
+    res.status(500).json(formatResponse(false, null, 'Failed to revoke access'));
+  }
+});
+
+module.exports = router;
